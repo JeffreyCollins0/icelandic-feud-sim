@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Icelandic Blood Feud Simulator</title>
+        <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@700&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="./style.css">
+    </head>
+    <body>
+        <!-- Page content -->
+        <div id="main_content" class="list_responsive">
+            <div id="banner_row">
+                <h1>Icelandic Blood Feud Simulator</h1>
+            </div>
+            <div id="sim_row" class="row_responsive">
+                <!-- main view -->
+                <div id="message_box">
+                    <!-- show event messages here -->
+                    <div id="message_title">It's murder. The plan is murder</div>
+                    <div id="message_content">Yeah, so it turns out Hallgerd kept killing people while you went to the Althing...</div>
+                    <button id="text_advance" class="link_button" onclick="closeBox()">Ok</button>
+                </div>
+
+                <!-- farm view -->
+                <div id="farm_list" class="list_responsive">
+                    <!-- fill with farm data blocks -->
+                </div>
+            </div>
+
+            <!-- buttons -->
+            <div id="control_row" class="row_responsive">
+                <button class="link_button" onclick="restart()">Restart</button>
+            </div>
+            <!-- other content -->
+        </div>
+        <script src="./main.js"></script>
+    </body>
+</html>
