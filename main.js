@@ -22,7 +22,7 @@ class Person {
         this.name = names[Math.floor(Math.random() * names.length)];
         this.farm = farm;
         this.value = value;
-        this.life = (Math.floor(Math.random() * 8)) * 18;
+        this.life = (Math.floor(Math.random() * 9)) * 18;
         this.respect = (Math.floor(Math.random() * 12) - 1);
         this.wisdom = Math.floor(Math.random() * 11);
         this.mood = (Math.floor(Math.random() * 8) + 5);
@@ -62,11 +62,9 @@ lawsuits = [];
 
 function init(){
     // initializes the sim environment
-    for(var i=0; i<3; i++){
-        //for(var i=0; i<4; i++){
-        var farm = new Farm((Math.floor(Math.random() * 2) + 2), (Math.floor(Math.random() * 13) + 6));
+    for(var i=0; i<4; i++){
+        var farm = new Farm((Math.floor(Math.random() * 2) + 2), (Math.floor(Math.random() * 10) + 6));
         farms.push(farm);
-        //console.log("Added farm "+farm.name+" with properties people="+farm.people+", silver="+farm.silver);
     }
     printFarms();
     // initializes some UI vars
@@ -83,7 +81,7 @@ function restart(){
     // redo init
     init();
     // restart sim loop
-    game_loop = setInterval(step, 200); // 1/20-second time increments (50)
+    game_loop = setInterval(step, 200); // 1/5-second time increments
 }
 
 function step(){
@@ -106,7 +104,6 @@ function update(){
 
     if(sim_time == 36){
         // handle events at the althing
-        console.log("The Althing has been called");
         if(lawsuits.length > 0){
             // settle lawsuits
             var n = 0;
@@ -114,7 +111,6 @@ function update(){
             var message = "";
             while(lawsuits.length > 0){
                 var suit = lawsuits.pop();
-                console.log("Got legal case "+suit);
                 var result = legalCase(suit[0], suit[1], suit[2], suit[3]);
                 message += result[0];
                 net_result += result[1];
@@ -122,7 +118,6 @@ function update(){
             }
             // open message box (average out the result)
             setTimeout(function(){
-                //postMessage("Althing", result[0], result[1]);
                 postMessage("Althing", message, Math.round(net_result / n));
             }, 10);
         }else{
@@ -130,19 +125,14 @@ function update(){
             sim_time = 0;
         }
     }else{
-        //console.log("Another game step");
         // random event
         if(Math.random() < 0.2){
-            //console.log("A random event has occurred");
             var person = randomPerson(function(person){ return person.abroad_time == 0 && person.deceased == false });
-            console.log("Got person "+person.name);
             if(person != "None"){
                 var event = randomEvent(person);
-                //console.log("got event result "+event);
                 if(event[0] != "None"){
                     // open message box
                     setTimeout(function(){
-                        //console.log("posting message from event result "+event);
                         postMessage(event[0], event[1], event[2]);
                     }, 10);
                 }
@@ -153,19 +143,15 @@ function update(){
         sim_time += 1;
     }
 
-    //farms.forEach(farm => {
     for(var i=0; i<farms.length; i++){
         var farm = farms[i];
-        //farm.people.forEach(person => {
         for(var j=0; j<farm.people.length; j++){
             var person = farm.people[j];
             if(person.deceased == false){
-                //console.log("Examining person "+person.name);
                 person.life -= 1;
                 // handle people out abroad
                 if(person.abroad_time > 0){
                     person.abroad_time -= 1;
-                    console.log("Abroad time for "+person.name+" ticked down to "+person.abroad_time);
                     // chance of death while abroad (~5%)
                     if(Math.random() < 0.05){
                         handleDeath(person);
@@ -174,42 +160,19 @@ function update(){
                 // handle people dying of old age
                 if(person.life == 0){
                     handleDeath(person);
-                    //person.deceased = true;
-                    //j -= 1;
                 }
             }
-        }//);
-
-        /*if(farm.people.length == 0){
-            
-            i -= 1;
-        }else{
-            var printout = "People from farm "+farm.name+": ";
-            farm.people.forEach(person => {
-                printout += person.name+", ";
-            });
-            console.log(printout);
-        }*/
-    }//);
+        }
+    }
 
     // housekeeping
     for(var i=farms.length-1; i>=0; i--){
         farms[i].people = farms[i].people.filter(person => { return person.deceased == false });
         if(farms[i].people.length == 0){
-            //
-            console.log("None are left at farm "+farm.name);
             // no one left at the farm
-            //farm.people.forEach(person => {
-                //handleDeath(person);
-            //});
             farm.people = [];
             var arrRef = farms;
-            console.log("farms array prior to removal: "+arrRef);
-            //var index = farms.indexOf(farm);
-            //delete farms[i];
             farms.splice(i, 1);
-            //delete farm;
-            console.log("farms array after removal: "+arrRef);
         }
     }
 
@@ -239,9 +202,7 @@ function randomEvent(person1){
     }
 
     var index = Math.floor(Math.random() * 11);
-    console.log("random event: got index "+index);
     switch (index){
-        // new arrival: outsider settles if there's space?
         case 0:
             // mood boost (favor)
             var other = randomCondition(function(person){ return (person.farm != person1.farm) });
@@ -295,7 +256,7 @@ function randomEvent(person1){
             }
         case 3:
             // mood decay
-            person1.mood -= 2; // undefined?
+            person1.mood -= 2;
             return ["None", "None"];
         case 4:
             // go abroad
@@ -309,7 +270,6 @@ function randomEvent(person1){
         case 8:
             // instigate (regular insult, nid insult, horse fight, theft)
             var random_result = Math.floor(Math.random() * 6);
-            console.log("Got instigation result "+random_result);
             switch(random_result){
                 case 0:
                 case 1:
@@ -318,7 +278,6 @@ function randomEvent(person1){
                     if(target == "None"){
                         return ["None", "None"];
                     }
-                    //console.log("We have a target in "+target.name);
                     target.mood -= 3;
                     var message = person1.name+" greatly insults "+target.name+".";
                     if(target.mood < 5){
@@ -330,14 +289,11 @@ function randomEvent(person1){
                             if(result[0] == "None"){
                                 return ["None", "None"];
                             }
-                            //console.log("Got message add-on "+result);
                             message += "\n"+result[0];
                         }else{
                             lawsuits.push([target, person1, "slander", 12]);
                         }
                     }
-                    //console.log("OG form: "+message);
-                    //console.log("Boxed form: "+["Insult", message, -1]);
                     return ["Insult", message, -1];
                 case 2:
                     // nid insult
@@ -361,7 +317,6 @@ function randomEvent(person1){
                     if(opponent == "None"){
                         return ["None", "None"];
                     }
-                    console.log("We have an opponent in "+opponent.name);
                     if(opponent.luck > person1.luck){
                         // challenger loses
                         person1.mood -= 3;
@@ -369,8 +324,6 @@ function randomEvent(person1){
                         opponent.mood += 2;
                         opponent.luck -= 1;
                         var message = person1.name+" challenges "+opponent.name+" to a horse fight and loses.";
-                        //console.log("OG form: "+message);
-                        //console.log("Boxed form: "+["Horse fight", message, -1]);
                         return ["Horse fight", message, -1];
                     }else if(opponent.luck < person1.luck){
                         // challenger wins
@@ -379,27 +332,20 @@ function randomEvent(person1){
                         opponent.mood -= 3;
                         opponent.luck -= 1;
                         var message = person1.name+" challenges "+opponent.name+" to a horse fight and wins.";
-                        //console.log("OG form: "+message);
-                        //console.log("Boxed form: "+["Horse fight", message, 1]);
                         return ["Horse fight", message, 1];
                     }else if(Math.random() < 0.5){
                         // challenger wins
                         person1.mood += 2;
                         opponent.mood -= 3;
                         var message = person1.name+" challenges "+opponent.name+" to a horse fight and wins.";
-                        //console.log("OG form: "+message);
-                        //console.log("Boxed form: "+["Horse fight", message, 1]);
                         return ["Horse fight", message, 1];
                     }else{
                         // challenger loses
                         person1.mood -= 3;
                         opponent.mood += 2;
                         var message = person1.name+" challenges "+opponent.name+" to a horse fight and loses.";
-                        //console.log("OG form: "+message);
-                        //console.log("Boxed form: "+["Horse fight", message, -1]);
                         return ["Horse fight", message, -1];
                     }
-                    //return ["A", "AAA", 0];
                 case 5:
                     // theft
                     var farm = farms[Math.floor(Math.random() * farms.length)];
@@ -427,15 +373,6 @@ function randomEvent(person1){
                 return ["Assault", result[0], result[1]];
             }
             return ["None", "None"];
-        /*case 8:
-            // new arrival from abroad
-            if(farms.length < 6){
-                var farm = new Farm(2, 3);
-                farms.push(farm);
-                return ["Foreigner from abroad", "The foreigner "+farm.people[0].name+" arrives and founds "+farm.name+".", 0];
-            }else{
-                return ["None", "None"];
-            }*/
         default:
             // mood boost (gift-giving)
             var other = randomCondition(function(person){ return (person.farm != person1.farm) });
@@ -448,21 +385,18 @@ function randomEvent(person1){
       }
 }
 
-function randomPerson(conditions){ // THERE ARE STILL GHOSTS IN THE SHELL WHYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY
+function randomPerson(conditions){
     var possibilities = [];
     farms.forEach(farm => {
         farm.people.forEach(person => {
             if(conditions(person)){
                 possibilities.push(person);
             }
-            //console.log("Got conditions result "+conditions(person));
         });
     });
-    //console.log("Got possibilities "+possibilities);
     if(possibilities.length > 0){
         var index = Math.floor(Math.random() * possibilities.length);
         var person = possibilities[index];
-        console.log("returning random person "+person.name+" from "+person.farm.name);
         return possibilities[index];
     }else{
         return "None";
@@ -470,8 +404,6 @@ function randomPerson(conditions){ // THERE ARE STILL GHOSTS IN THE SHELL WHYYYY
 }
 
 function fight(group1, group2){
-    console.log("Handling fight between "+group1+" of "+group1[0].farm.name+" and "+group2+" of "+group2[0].farm.name);
-
     // get collective luck of each side
     var g1_luck = 0;
     var g2_luck = 0;
@@ -504,7 +436,6 @@ function fight(group1, group2){
 
     if(g1_luck > g2_luck){
         // group 1 wins
-        //console.log("The attackers win");
 
         // allied losses
         group1.forEach(fighter => {
@@ -512,33 +443,25 @@ function fight(group1, group2){
             fighter.mood += 3
             if(fighter.luck < 0){
                 handleDeath(fighter);
-                //fighter.deceased = true;
                 opponent = randomInGroup(group2);
                 if(opponent == "None"){
-                    //console.log("target not found");
                     return ["None", "None"];
                 }
-                //console.log("pressing suit against "+opponent.name+"("+opponent+") on behalf of "+fighter.name);
                 lawsuits.push([fighter, opponent, g2_charge, fighter.value]);
             }
         });
         // opposing losses
         var losses = Math.ceil(0.8 * group2.length);
-        console.log(losses+" are slain from the opposing group");
         for(var i=0; i<losses; i++){
             handleDeath(group2[i]);
-            //group2[i].deceased = true;
             opponent = randomInGroup(group1);
             if(opponent == "None"){
-                //console.log("target not found");
                 return ["None", "None"];
             }
-            //console.log("pressing suit against "+opponent.name+"("+opponent+") on behalf of "+group2[i].name);
             lawsuits.push([group2[i], opponent, g1_charge, group2[i].value]);
         }
     }else if(g1_luck < g2_luck){
         // group 2 wins
-        //console.log("The defenders win");
 
         // allied losses
         group2.forEach(fighter => {
@@ -546,58 +469,42 @@ function fight(group1, group2){
             fighter.mood += 3;
             if(fighter.luck < 0){
                 handleDeath(fighter);
-                //fighter.deceased = true;
                 opponent = randomInGroup(group1);
                 if(opponent == "None"){
-                    //console.log("target not found");
                     return ["None", "None"];
                 }
-                //console.log("pressing suit against "+opponent.name+"("+opponent+") on behalf of "+fighter.name);
                 lawsuits.push([fighter, opponent, g1_charge, fighter.value]);
             }
         });
         // opposing losses
         var losses = Math.ceil(0.8 * group1.length);
-        console.log(losses+" are slain from the opposing group");
         for(var i=0; i<losses; i++){
             handleDeath(group1[i]);
-            //group1[i].deceased = true;
             opponent = randomInGroup(group2);
             if(opponent == "None"){
-                //console.log("target not found");
                 return ["None", "None"];
             }
-            //console.log("pressing suit against "+opponent.name+"("+opponent+") on behalf of "+group1[i].name);
             lawsuits.push([group1[i], opponent, g2_charge, group1[i].value]);
         }
     }else{
         if(Math.random() < 0.5){
             // group 1 wins
-            //console.log("The attackers win");
             var g1_losses = Math.ceil(0.4 * group1.length);
-            console.log(g1_losses+" are slain from the attacking group");
             for(var i=0; i<g1_losses; i++){
                 handleDeath(group1[i]);
-                //group1[i].deceased = true;
                 opponent = randomInGroup(group2);
                 if(opponent == "None"){
-                    //console.log("target not found");
                     return ["None", "None"];
                 }
-                //console.log("pressing suit against "+opponent.name+"("+opponent+") on behalf of "+group1[i].name);
                 lawsuits.push([group1[i], opponent, g2_charge, group1[i].value]);
             }
             var g2_losses = Math.ceil(0.6 * group2.length);
-            console.log(g2_losses+" are slain from the opposing group");
             for(var i=0; i<g2_losses; i++){
                 handleDeath(group2[i]);
-                //group2[i].deceased = true;
                 opponent = randomInGroup(group1);
                 if(opponent == "None"){
-                    //console.log("target not found");
                     return ["None", "None"];
                 }
-                //console.log("pressing suit against "+opponent.name+"("+opponent+") on behalf of "+group2[i].name);
                 lawsuits.push([group2[i], opponent, g1_charge, group2[i].value]);
             }
             group1.forEach(fighter => {
@@ -605,31 +512,22 @@ function fight(group1, group2){
             });
         }else{
             // group 2 wins
-            //console.log("The defenders win");
             var g1_losses = Math.ceil(0.6 * group1.length);
-            console.log(g1_losses+" are slain from the opposing group");
             for(i=0; i<g1_losses; i++){
                 handleDeath(group1[i]);
-                //group1[i].deceased = true;
                 opponent = randomInGroup(group2);
                 if(opponent == "None"){
-                    //console.log("target not found");
                     return ["None", "None"];
                 }
-                //console.log("pressing suit against "+opponent.name+"("+opponent+") on behalf of "+group1[i].name);
                 lawsuits.push([group1[i], opponent, g2_charge, group1[i].value]);
             }
             var g2_losses = Math.ceil(0.4 * group2.length);
-            console.log(g2_losses+" are slain from the defending group");
             for(i=0; i<g2_losses; i++){
                 handleDeath(group2[i]);
-                //group2[i].deceased = true;
                 opponent = randomInGroup(group1);
                 if(opponent == "None"){
-                    //console.log("target not found");
                     return ["None", "None"];
                 }
-                //console.log("pressing suit against "+opponent.name+"("+opponent+") on behalf of "+group2[i].name);
                 lawsuits.push([group2[i], opponent, g1_charge, group2[i].value]);
             }
             group2.forEach(fighter => {
@@ -643,7 +541,6 @@ function fight(group1, group2){
 }
 
 function legalCase(person1, person2, charge, amount){
-    //console.log("legal case from plaintiff "+person1.name+" against "+person2.name+" for the charge of "+charge+" with amount "+amount);
     var message = "A lawsuit was settled.";
     var winner = -1;
     var result = 0;
@@ -671,45 +568,45 @@ function legalCase(person1, person2, charge, amount){
         case "slander":
             message = "";
             if(person2.deceased == false){
-            if(person2.luck > person1.luck){
-                if(person2.wisdom > person1.wisdom){
-                    // no consequences, improper ruling
-                    message += "The case of slander is settled with no compensation due to "+person2.name+"\'s cleverness.\n";
-                    winner = 1;
-                    result = -1;
-                }else{
-                    // half compensation
-                    person2.farm.silver -= Math.round(amount/2);
-                    person1.farm.silver += Math.round(amount/2);
-                    message += person2.name+" is sentenced to pay half compensation for slander due to their cleverness.\n";
-                    winner = 1;
-                    result = -1;
-                }
-            }else if(person2.luck < person1.luck){
-                // full compensation
-                person2.farm.silver -= amount;
-                person1.farm.silver += amount;
-                message += person2.name+" is sentenced to pay full compensation for slander.\n";
-                winner = 0;
-            }else{
-                if(person2.wisdom > person1.wisdom){
-                    // half compensation
-                    person2.farm.silver -= Math.round(amount/2);
-                    person1.farm.silver += Math.round(amount/2);
-                    message += person2.name+" is sentenced to pay half compensation for slander due to their cleverness.\n";
-                    winner = 1;
-                    result = -1;
-                }else{
+                if(person2.luck > person1.luck){
+                    if(person2.wisdom > person1.wisdom){
+                        // no consequences, improper ruling
+                        message += "The case of slander is settled with no compensation due to "+person2.name+"\'s cleverness.\n";
+                        winner = 1;
+                        result = -1;
+                    }else{
+                        // half compensation
+                        person2.farm.silver -= Math.round(amount/2);
+                        person1.farm.silver += Math.round(amount/2);
+                        message += person2.name+" is sentenced to pay half compensation for slander due to their cleverness.\n";
+                        winner = 1;
+                        result = -1;
+                    }
+                }else if(person2.luck < person1.luck){
                     // full compensation
                     person2.farm.silver -= amount;
                     person1.farm.silver += amount;
                     message += person2.name+" is sentenced to pay full compensation for slander.\n";
                     winner = 0;
+                }else{
+                    if(person2.wisdom > person1.wisdom){
+                        // half compensation
+                        person2.farm.silver -= Math.round(amount/2);
+                        person1.farm.silver += Math.round(amount/2);
+                        message += person2.name+" is sentenced to pay half compensation for slander due to their cleverness.\n";
+                        winner = 1;
+                        result = -1;
+                    }else{
+                        // full compensation
+                        person2.farm.silver -= amount;
+                        person1.farm.silver += amount;
+                        message += person2.name+" is sentenced to pay full compensation for slander.\n";
+                        winner = 0;
+                    }
                 }
-            }
-            if(person2.farm.silver < 0){
-                person2.farm.silver = 0;
-            }
+                if(person2.farm.silver < 0){
+                    person2.farm.silver = 0;
+                }
             }else{
                 person2.farm.silver -= amount;
                 person1.farm.silver += amount;
@@ -719,7 +616,6 @@ function legalCase(person1, person2, charge, amount){
             break;
         case "slaughter":
             message = "";
-            //if(!person1 in person1.farm.people){
             if(person2.farm.silver < amount){
                 if(person2.deceased == false){
                     person2.abroad_time = 108;
@@ -738,21 +634,7 @@ function legalCase(person1, person2, charge, amount){
 
             // handle death after
             handleDeath(person1);
-                
-            /*
-            if(person2 == undefined){
-                if(person1.farm.silver < person2.value && person1 in person1.farm.people){
-                    person1.abroad_time = 108;
-                    message += person2.name+" is sentenced to partial outlawry due to being unable to pay full compensation.\n";
-                    person2.farm.silver += person1.farm.silver;
-                }else{
-                    person2.farm.silver += person2.value;
-                    person1.farm.silver -= person2.value;
-                }
-                message += person2.name+" is granted full compensation.\n";
-                result = 0;
-            }
-            */
+
             break;
         case "slaughter-ambush":
             message = "";
@@ -774,30 +656,7 @@ function legalCase(person1, person2, charge, amount){
 
             // handle death after
             handleDeath(person1);
-            /*if(!person1 in person1.farm.people){
-                if(person2.farm.silver < person1.value && person2 in person2.farm.people){
-                    person2.abroad_time = 108;
-                    message += person2.name+" is sentenced to partial outlawry due to being unable to pay full compensation.\n";
-                    person1.farm.silver += person2.farm.silver;
-                }else{
-                    person1.farm.silver += person1.value;
-                    person2.farm.silver -= person1.value;
-                }
-                message += person1.name+" is granted full compensation.\n";
-                result = 0;
-            }
-            if(!person2 in person2.farm.people){
-                if(person1.farm.silver < Math.round(person2.value/2) && person1 in person1.farm.people){
-                    person1.abroad_time = 108;
-                    message += person2.name+" is sentenced to partial outlawry due to being unable to pay full compensation.\n";
-                    person2.farm.silver += person1.farm.silver;
-                }else{
-                    person2.farm.silver += Math.round(person2.value/2);
-                    person1.farm.silver -= Math.round(person2.value/2);
-                }
-                message += person2.name+" is granted half compensation due to fighting in ambush.\n";
-                result = 0;
-            }*/
+            
             break;
         case "slaughter-nid":
             message = "";
@@ -819,23 +678,7 @@ function legalCase(person1, person2, charge, amount){
             
             // handle death after
             handleDeath(person1);
-            /*
-            if(!person1 in person1.farm.people){
-                if(person2.farm.silver < person1.value && person2 in person2.farm.people){
-                    person2.abroad_time = 108;
-                    message += person2.name+" is sentenced to partial outlawry due to being unable to pay full compensation.\n";
-                    person1.farm.silver += person2.farm.silver;
-                }else{
-                    person1.farm.silver += person1.value;
-                    person2.farm.silver -= person1.value;
-                }
-                message += person1.name+" is granted full compensation.\n";
-                result = 0;
-            }
-            if(!person2 in person2.farm.people){
-                message = person2.name+" is treated as an outlaw for the use of a Nid insult and is denied compensation.\n";
-                result = 1;
-            }*/
+            
             break;
     }
 
@@ -862,35 +705,6 @@ function legalCase(person1, person2, charge, amount){
             }
         }
     }
-    /*if(winner == 0){
-        // plaintiff wins
-        person1.mood += 3;
-        if(person2.respect <= 0){
-            person2.mood = 2;
-        }else{
-            person2.mood -= 1;
-        }
-    }else if(winner == 1){
-        // defendant wins
-        person2.mood += 3;
-        if(person1.respect <= 0){
-            person1.mood = 2;
-        }else{
-            person1.mood -= 1;
-        }
-    }else{
-        // both negative
-        if(person1.respect <= 0){
-            person1.mood = 2;
-        }else{
-            person1.mood -= 1;
-        }
-        if(person2.respect <= 0){
-            person2.mood = 2;
-        }else{
-            person2.mood -= 1;
-        }
-    }*/
 
     // return
     return [message, result];
@@ -899,13 +713,10 @@ function legalCase(person1, person2, charge, amount){
 function getTeam(person){
     var team = [person];
     var extras = 0;
-    //console.log("Getting team for "+person.name+" with mood "+person.mood);
     if(person.mood <= 1){
         extras = Math.min(person.farm.people.length-1, 24);
-        //console.log(person.name+" has mood "+person.mood+" and rallies "+extras+" additional fighters");
     }else if(person.mood < 3){
         extras = Math.min(person.farm.people.length-1, 6);
-        //console.log(person.name+" has mood "+person.mood+" and rallies "+extras+" additional fighters");
     }
     for(var i=0; i<extras; i++){
         team.push(person.farm.people[i]);
@@ -914,30 +725,16 @@ function getTeam(person){
 }
 
 function handleDeath(person){
-    console.log("Handling death for person "+person.name+" of "+person.farm.name+" (PID="+person.person_id+")");
     if(person.spouse != null){
         person.spouse.spouse = null;
     }
     person.deceased = true;
-    //var arrRef = person.farm.people;
-    //console.log("people array prior to removal: "+arrRef);
-    //var index = person.farm.people.indexOf(person);
-    //delete person.farm.people[index];
-    //person.farm.people.splice(index, 1);
-    //delete person;
-    //console.log("people array after removal: "+arrRef);
 }
 
 // ==== Start the sim loop ====
 
-/*
-Test enviro
-farms.push(new Farm(1,1));
-farms.push(new Farm(1,1));
-farms.push(new Farm(1,1));
-*/
 init();
-game_loop = setInterval(step, 200); // 1/20-second time increments (50)
+game_loop = setInterval(step, 200); // 1/5-second time increments
 setTimeout(function(){
     postMessage("Welcome", "This simulator is meant to approximate the events of an Icelandic community interacting with one another. Simulation by Jeffrey Collins.", 0);
 }, 10);
@@ -945,7 +742,7 @@ setTimeout(function(){
 // ==== UI Functions ====
 
 var text_box_open = true;
-// separate by positive/negative/context-sensitive
+// separate by positive/negative/neutral
 var response_options_pos = ["Cool", "Good to hear", "Nice", "Great", "All in good friendship"];
 var response_options_neu = ["Ok", "Acceptable", "Alright", "Sure", "Of course"];
 var response_options_neg = ["This is fine", "Why are you like this", "Not again", "How dare they", "Not very drengiligr of you"];
@@ -999,7 +796,6 @@ function printFarms(){
     var container = document.getElementById("farm_list");
     container.innerHTML = "";
     farms.forEach(farm => {
-        //console.log("handling farm "+farm.name);
         container.innerHTML += `
         <div class="farm_card list_responsive fill_width_ignore">
             <p>`+farm.name+`</p>
